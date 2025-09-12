@@ -1,0 +1,46 @@
+import heapq
+
+def manhattan(state, goal):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            value = state[i][j]
+            if value != 0:
+                for x in range(3):
+                    for y in range(3):
+                        if goal[x][y] == value:
+                            distance += abs(i - x) + abs(j - y)
+    return distance
+
+def a_star_manhattan(start, goal):
+    pq = []
+    heapq.heappush(pq, (0, start, []))
+    visited = set()
+
+    while pq:
+        f, state, path = heapq.heappop(pq)
+
+        if state == goal:
+            return path
+
+        visited.add(tuple(map(tuple, state)))
+
+        i, j = [(row_i, col_i)
+                for row_i in range(3)
+                for col_i in range(3) if state[row_i][col_i] == 0][0]
+
+        moves = [(-1, 0, "Up"), (1, 0, "Down"), (0, -1, "Left"), (0, 1, "Right")]
+
+        for dx, dy, action in moves:
+            x, y = i + dx, j + dy
+            if 0 <= x < 3 and 0 <= y < 3:
+                new_state = [row[:] for row in state]
+                new_state[i][j], new_state[x][y] = new_state[x][y], new_state[i][j]
+
+                if tuple(map(tuple, new_state)) not in visited:
+                    h = manhattan(new_state, goal)
+                    g = len(path) + 1
+                    f_new = g + h
+                    heapq.heappush(pq, (f_new, new_state, path + [action]))
+
+    return None
