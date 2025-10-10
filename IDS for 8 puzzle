@@ -1,0 +1,80 @@
+from collections import deque
+
+GOAL = (1, 2, 3,
+        4, 5, 6,
+        7, 8, 0)
+
+MOVES = {
+    'up': -3,
+    'down': 3,
+    'left': -1,
+    'right': 1,
+}
+
+def is_valid_move(blank_pos, move):
+    if move == 'left' and blank_pos % 3 == 0:
+        return False
+    if move == 'right' and blank_pos % 3 == 2:
+        return False
+    if move == 'up' and blank_pos < 3:
+        return False
+    if move == 'down' and blank_pos > 5:
+        return False
+    return True
+
+def get_successors(state):
+    blank_pos = state.index(0)
+    successors = []
+    for move, delta in MOVES.items():
+        if is_valid_move(blank_pos, move):
+            new_pos = blank_pos + delta
+            new_state = list(state)
+            new_state[blank_pos], new_state[new_pos] = new_state[new_pos], new_state[blank_pos]
+            successors.append(tuple(new_state))
+    return successors
+
+def depth_limited_search(state, depth, limit, visited):
+    if state == GOAL:
+        return [state]
+    if depth == limit:
+        return None
+    visited.add(state)
+    for succ in get_successors(state):
+        if succ not in visited:
+            path = depth_limited_search(succ, depth + 1, limit, visited)
+            if path is not None:
+                return [state] + path
+    return None
+
+def iterative_deepening_search(start):
+    depth = 0
+    while True:
+        visited = set()
+        result = depth_limited_search(start, 0, depth, visited)
+        if result is not None:
+            return result
+        depth += 1
+
+def print_board(state):
+    for i in range(0, 9, 3):
+        print(' '.join(str(x) if x != 0 else ' ' for x in state[i:i+3]))
+    print()
+
+def main():
+    start_state = (1, 2, 3,
+                   4, 0, 6,
+                   7, 5, 8)
+    print("Starting state:")
+    print_board(start_state)
+
+    solution_path = iterative_deepening_search(start_state)
+
+    if solution_path:
+        print(f"Solution found in {len(solution_path) - 1} moves:\n")
+        for step in solution_path:
+            print_board(step)
+    else:
+        print("No solution found.")
+
+if __name__ == "__main__":
+    main()
