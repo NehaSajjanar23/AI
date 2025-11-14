@@ -1,0 +1,43 @@
+import itertools
+
+def pl_true(expr, model):
+    if expr == 'True': return True
+    if expr == 'False': return False
+    if expr in model: return model[expr]
+    if expr.startswith('not '): return not pl_true(expr[4:], model)
+    if ' and ' in expr:
+        a, b = expr.split(' and ', 1)
+        return pl_true(a, model) and pl_true(b, model)
+    if ' or ' in expr:
+        a, b = expr.split(' or ', 1)
+        return pl_true(a, model) or pl_true(b, model)
+    if '=>' in expr:
+        a, b = expr.split('=>', 1)
+        return (not pl_true(a, model)) or pl_true(b, model)
+    if '<=>' in expr:
+        a, b = expr.split('<=>', 1)
+        return pl_true(a, model) == pl_true(b, model)
+    return False
+
+def tt_check_all(kb, alpha, symbols, model):
+    if not symbols:
+        if all(pl_true(s, model) for s in kb):
+            return pl_true(alpha, model)
+        else:
+            return True
+    rest = symbols[1:]
+    p = symbols[0]
+    model_true = model.copy()
+    model_true[p] = True
+    model_false = model.copy()
+    model_false[p] = False
+    return tt_check_all(kb, alpha, rest, model_true) and tt_check_all(kb, alpha, rest, model_false)
+
+def tt_entails(kb, alpha):
+    symbols = sorted({s for sentence in kb + [alpha] for s in sentence.replace('not ','').replace('(','').replace(')','').replace('and','').replace('or','').replace('=>','').replace('<=>','').split() if s not in ['and','or','=>','<=>','not','True','False']})
+    return tt_check_all(kb, alpha, symbols, {})
+
+kb = input("Enter knowledge base sentences separated by commas: ").split(',')
+alpha = input("Enter query sentence: ")
+print("Entailment:", tt_entails([s.strip() for s in kb], alpha.strip()))
+
