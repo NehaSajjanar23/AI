@@ -1,0 +1,136 @@
+import math
+
+pruned = []   # store pruned branches
+
+
+# ---------------------------------------------------
+#                 ALPHA–BETA FUNCTION
+# ---------------------------------------------------
+def alphabeta(node, isMax, alpha, beta, tree):
+    global pruned
+
+    # Leaf node (integer)
+    if isinstance(node, int):
+        return node
+
+    children = tree[node]
+
+    if isMax:      # MAX NODE
+        value = -math.inf
+        for child in children:
+            if value >= beta:
+                pruned.append((node, child))
+                break
+            val = alphabeta(child, False, alpha, beta, tree)
+            value = max(value, val)
+            alpha = max(alpha, value)
+        return value
+    
+    else:          # MIN NODE
+        value = math.inf
+        for child in children:
+            if value <= alpha:
+                pruned.append((node, child))
+                break
+            val = alphabeta(child, True, alpha, beta, tree)
+            value = min(value, val)
+            beta = min(beta, value)
+        return value
+
+
+# ---------------------------------------------------
+#      FIND PATH FROM ROOT TO VALUE SELECTED
+# ---------------------------------------------------
+def compute_value(node, isMax, tree):
+    """Compute subtree value without pruning."""
+    if isinstance(node, int):
+        return node
+    if isMax:
+        return max(compute_value(c, False, tree) for c in tree[node])
+    else:
+        return min(compute_value(c, True, tree) for c in tree[node])
+
+
+def find_path(node, target, isMax, tree):
+    if isinstance(node, int):
+        return [node]
+
+    children = tree[node]
+
+    if isMax:
+        for c in children:
+            if compute_value(c, False, tree) == target:
+                return [node] + find_path(c, target, False, tree)
+    else:
+        for c in children:
+            if compute_value(c, True, tree) == target:
+                return [node] + find_path(c, target, True, tree)
+
+    return [node]
+
+
+# ---------------------------------------------------
+#              USER INPUT SECTION
+# ---------------------------------------------------
+print("\nEnter your game tree.")
+print("Format for each line:")
+print("  Parent Child1 Child2 Child3 ...")
+print("Use integers for leaves.")
+print("Example:")
+print("  A B C")
+print("  B D E")
+print("  D 41 5")
+print("Type 'done' to stop\n")
+
+tree = {}
+
+while True:
+    line = input("Enter node: ")
+    if line.lower().strip() == "done":
+        break
+
+    parts = line.split()
+    parent = parts[0]
+    children = []
+
+    for ch in parts[1:]:
+        # convert leaf to int
+        try:
+            children.append(int(ch))
+        except:
+            children.append(ch)
+
+    tree[parent] = children
+
+root = input("\nEnter root node: ").strip()
+
+
+# ---------------------------------------------------
+#                RUN ALPHA–BETA
+# ---------------------------------------------------
+pruned = []
+root_value = alphabeta(root, True, -math.inf, math.inf, tree)
+path = find_path(root, root_value, True, tree)
+
+
+# ---------------------------------------------------
+#                    OUTPUT
+# ---------------------------------------------------
+print("\n==============================")
+print("      ALPHA–BETA RESULT")
+print("==============================\n")
+
+print(f"Value of Root ({root}) = {root_value}\n")
+
+print("Chosen Path:")
+print(" → ".join(map(str, path)), "\n")
+
+print("Pruned Branches:")
+if pruned:
+    for p in pruned:
+        print(f"  Pruned: child {p[1]} of node {p[0]}")
+else:
+    print("  No branches pruned.")
+
+
+
